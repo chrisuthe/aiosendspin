@@ -20,7 +20,6 @@ from aiosendspin.models.types import (
     AudioCodec,
     ClientMessage,
     SignalState,
-    TrustLevel,
 )
 
 
@@ -61,12 +60,11 @@ def test_hello_drops_source_support_without_role() -> None:
 
 
 def test_hello_preserves_supported_pair_methods_positional_argument() -> None:
-    """Source support does not displace existing client/hello positional arguments."""
+    """Source support is appended, so it does not displace supported_pair_methods."""
     pair_methods = SupportedPairMethods(pairing_psk=PairMethodDescriptor())
     payload = ClientHelloPayload(
         "Client",
         [],
-        TrustLevel.NONE,
         None,
         None,
         None,

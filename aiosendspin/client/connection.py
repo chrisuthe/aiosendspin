@@ -85,7 +85,6 @@ from aiosendspin.models.types import (
     Roles,
     ServerMessage,
     SignalState,
-    TrustLevel,
     UndefinedField,
     role_family,
 )
@@ -1027,7 +1026,6 @@ class SendspinConnection:
             artwork_support=self._client.artwork_support,
             visualizer_support=self._client.visualizer_support,
             source_support=self._client.source_support,
-            trust_level=self._compute_trust(),
             supported_pair_methods=await self._build_supported_pair_methods(),
             unpaired_access=UnpairedAccess(enabled=await self._unpaired_access_enabled()),
         )
@@ -1052,12 +1050,6 @@ class SendspinConnection:
         """Build the descriptor for a method whose secret the operator looks up."""
         locations = self._client.secret_locations
         return PairMethodDescriptor(locations=list(locations) if locations else None)
-
-    def _compute_trust(self) -> TrustLevel:
-        """Trust extended to the reached server: ``user`` when paired, else ``none``."""
-        if self._noise_psk is not None and self._noise_psk.category is PskCategory.LONG_TERM:
-            return TrustLevel.USER
-        return TrustLevel.NONE
 
     async def _send_client_hello(self) -> None:
         assert self._ws is not None
@@ -1393,7 +1385,7 @@ class SendspinConnection:
     async def _handle_unpair(self) -> None:
         """Handle server/unpair: drop the matched record (unless shared) and close."""
         if self._noise_psk is None or self._noise_psk.category is not PskCategory.LONG_TERM:
-            return  # trust_level 'none' (pairing / unpaired handshake): ignore and continue.
+            return  # Not a long-term session (pairing / unpaired): ignore and continue.
         await handle_unpair(self._client.pairing_store, matched_psk_id=self._noise_psk.psk_id)
         await self._goodbye_and_disconnect(GoodbyeReason.UNPAIRED)
 
